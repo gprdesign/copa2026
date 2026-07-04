@@ -54,6 +54,7 @@
   .team { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
   .team-flag { font-size: 2em; line-height: 1; }
   .team-name { font-size: 0.78em; font-weight: 600; text-align: center; color: #ccd; letter-spacing: 0.3px; }
+  .team-name.tbd { color: #445; font-size: 0.7em; font-style: italic; }
   .score-box { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .score { font-size: 2em; font-weight: 800; min-width: 32px; text-align: center; color: #fff; }
   .score-sep { font-size: 1.4em; color: #445; font-weight: 300; }
@@ -69,6 +70,7 @@
     display: inline-block; width: 6px; height: 6px; background: #ff4444;
     border-radius: 50%; margin-right: 5px; animation: pulse 1s infinite; vertical-align: middle;
   }
+  .vs-tbd { color: #334; font-size: 0.65em; text-align: center; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -91,14 +93,23 @@ var FLAGS = {
   'Turkey':'🇹🇷','Peru':'🇵🇪','Venezuela':'🇻🇪','Panama':'🇵🇦','Honduras':'🇭🇳',
   'Costa Rica':'🇨🇷','Jamaica':'🇯🇲','Bolivia':'🇧🇴','New Zealand':'🇳🇿','Indonesia':'🇮🇩'
 };
-var PHASES = { 'r16':'⚔️ Oitavas de Final','qf':'🎯 Quartas de Final','sf':'🔥 Semifinais','third':'🥉 Disputa de 3º Lugar','final':'🏆 Final' };
-function flag(n){ return FLAGS[n]||'🏳️'; }
+var PHASES = {
+  'r16':'⚔️ Oitavas de Final',
+  'qf':'🎯 Quartas de Final',
+  'sf':'🔥 Semifinais',
+  'third':'🥉 Disputa de 3º Lugar',
+  'final':'🏆 Final'
+};
+
+function flag(n){ return (n && FLAGS[n]) ? FLAGS[n] : '🏳️'; }
+
 function parseDate(s){
   if(!s) return null;
   var m=s.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
   if(!m) return null;
   return new Date(m[3]+'-'+m[2]+'-'+m[1]+'T'+m[4]+':'+m[5]+':00');
 }
+
 function statusLabel(g){
   if(g.time_elapsed==='live') return '<span class="game-status status-live"><span class="live-badge"></span>AO VIVO</span>';
   if(g.finished==='TRUE'||g.time_elapsed==='finished') return '<span class="game-status status-finished">Encerrado</span>';
@@ -106,51 +117,153 @@ function statusLabel(g){
   if(d) return '<span class="game-status status-notstarted">'+d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</span>';
   return '<span class="game-status status-notstarted">Em breve</span>';
 }
-function renderGame(g){
-  var isLive=g.time_elapsed==='live';
-  var isDone=g.finished==='TRUE'||g.time_elapsed==='finished';
-  var cls=isLive?'live':isDone?'finished':'';
-  var home=g.home_team_name_en||g.home_team_label||'?';
-  var away=g.away_team_name_en||g.away_team_label||'?';
-  var hf=g.home_team_name_en?flag(home):'🏳️';
-  var af=g.away_team_name_en?flag(away):'🏳️';
-  var hs=(isDone||isLive)?g.home_score:'-';
-  var as=(isDone||isLive)?g.away_score:'-';
-  return '<div class="game-card '+cls+'">'+(isLive?'<div class="live-indicator"></div>':'')+
+
+// Resolve quem pode jogar num slot ainda indefinido
+// Retorna {name, flag, candidates} onde candidates = "Time A ou Time B" se ainda não definido
+function resolveSlot(label, gameMap, depth) {
+  if (!label) return {name: null, candidates: null};
+  if (depth > 5) return {name: null, candidates: '?'};
+
+  // Winner Match X
+  var mw = label.match(/Winner Match (\d+)/i);
+  if (mw) {
+    var refId = mw[1];
+    var ref = gameMap[refId];
+    if (!ref) return {name: null, candidates: '?'};
+    if (ref.winner) return {name: ref.winner, candidates: null};
+    // não terminou — mostrar os candidatos
+    var h = resolveSlot(ref.homeLabel || ref.home, gameMap, depth+1);
+    var a = resolveSlot(ref.awayLabel || ref.away, gameMap, depth+1);
+    var hName = h.name || h.candidates || '?';
+    var aName = a.name || a.candidates || '?';
+    return {name: null, candidates: hName + ' ou ' + aName};
+  }
+
+  // Loser Match X
+  var ml = label.match(/Loser Match (\d+)/i);
+  if (ml) {
+    var refId2 = ml[1];
+    var ref2 = gameMap[refId2];
+    if (!ref2) return {name: null, candidates: '?'};
+    if (ref2.loser) return {name: ref2.loser, candidates: null};
+    var h2 = resolveSlot(ref2.homeLabel || ref2.home, gameMap, depth+1);
+    var a2 = resolveSlot(ref2.awayLabel || ref2.away, gameMap, depth+1);
+    var hN = h2.name || h2.candidates || '?';
+    var aN = a2.name || a2.candidates || '?';
+    return {name: null, candidates: hN + ' ou ' + aN};
+  }
+
+  // É um nome de time direto
+  return {name: label, candidates: null};
+}
+
+function buildGameMap(games) {
+  var map = {};
+  for (var i = 0; i < games.length; i++) {
+    var g = games[i];
+    var gid = g.id;
+    var home = g.home_team_name_en;
+    var away = g.away_team_name_en;
+    var hs = parseInt(g.home_score) || 0;
+    var as_ = parseInt(g.away_score) || 0;
+    var finished = g.finished === 'TRUE' || g.time_elapsed === 'finished';
+    var winner = null, loser = null;
+    if (finished && home && away) {
+      var hps = g.home_penalty_score && g.home_penalty_score !== 'null' ? parseInt(g.home_penalty_score) : null;
+      var aps = g.away_penalty_score && g.away_penalty_score !== 'null' ? parseInt(g.away_penalty_score) : null;
+      if (hps !== null && aps !== null) {
+        winner = hps > aps ? home : away;
+        loser  = hps > aps ? away : home;
+      } else {
+        winner = hs > as_ ? home : away;
+        loser  = hs > as_ ? away : home;
+      }
+    }
+    map[gid] = {
+      home: home, away: away,
+      homeLabel: g.home_team_label, awayLabel: g.away_team_label,
+      winner: winner, loser: loser, finished: finished
+    };
+  }
+  return map;
+}
+
+function renderGame(g, gameMap) {
+  var isLive = g.time_elapsed === 'live';
+  var isDone = g.finished === 'TRUE' || g.time_elapsed === 'finished';
+  var cls = isLive ? 'live' : isDone ? 'finished' : '';
+
+  // Resolver times
+  var homeResolved = g.home_team_name_en
+    ? {name: g.home_team_name_en, candidates: null}
+    : resolveSlot(g.home_team_label, gameMap, 0);
+  var awayResolved = g.away_team_name_en
+    ? {name: g.away_team_name_en, candidates: null}
+    : resolveSlot(g.away_team_label, gameMap, 0);
+
+  var homeName = homeResolved.name || (homeResolved.candidates || '?');
+  var awayName = awayResolved.name || (awayResolved.candidates || '?');
+  var homeIsTbd = !homeResolved.name;
+  var awayIsTbd = !awayResolved.name;
+  var hf = homeResolved.name ? flag(homeResolved.name) : '⚔️';
+  var af = awayResolved.name ? flag(awayResolved.name) : '⚔️';
+
+  var hs = (isDone || isLive) ? g.home_score : '-';
+  var as_ = (isDone || isLive) ? g.away_score : '-';
+
+  return '<div class="game-card '+cls+'">' +
+    (isLive ? '<div class="live-indicator"></div>' : '') +
     '<div class="game-meta"><span class="game-date">'+g.group+'</span>'+statusLabel(g)+'</div>'+
     '<div class="teams-row">'+
-      '<div class="team"><div class="team-flag">'+hf+'</div><div class="team-name">'+home+'</div></div>'+
-      '<div class="score-box"><div class="score">'+hs+'</div><div class="score-sep">:</div><div class="score">'+as+'</div></div>'+
-      '<div class="team"><div class="team-flag">'+af+'</div><div class="team-name">'+away+'</div></div>'+
-    '</div></div>';
+      '<div class="team">'+
+        '<div class="team-flag">'+hf+'</div>'+
+        '<div class="team-name'+(homeIsTbd?' tbd':'')+'">'+homeName+'</div>'+
+      '</div>'+
+      '<div class="score-box">'+
+        '<div class="score">'+hs+'</div>'+
+        '<div class="score-sep">:</div>'+
+        '<div class="score">'+as_+'</div>'+
+      '</div>'+
+      '<div class="team">'+
+        '<div class="team-flag">'+af+'</div>'+
+        '<div class="team-name'+(awayIsTbd?' tbd':'')+'">'+awayName+'</div>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
 }
-function renderAll(games){
-  var order=['r16','qf','sf','third','final'];
-  var html='';
-  for(var i=0;i<order.length;i++){
-    var ph=order[i];
-    var pg=games.filter(function(g){return g.type===ph;});
-    if(!pg.length) continue;
-    html+='<div class="phase-title">'+PHASES[ph]+'</div><div class="games-grid">';
-    for(var j=0;j<pg.length;j++) html+=renderGame(pg[j]);
-    html+='</div>';
+
+function renderAll(games) {
+  var gameMap = buildGameMap(games);
+  var order = ['r16','qf','sf','third','final'];
+  var html = '';
+  for (var i = 0; i < order.length; i++) {
+    var ph = order[i];
+    var pg = games.filter(function(g){ return g.type === ph; });
+    if (!pg.length) continue;
+    html += '<div class="phase-title">'+PHASES[ph]+'</div><div class="games-grid">';
+    for (var j = 0; j < pg.length; j++) html += renderGame(pg[j], gameMap);
+    html += '</div>';
   }
-  document.getElementById('app').innerHTML=html;
-  document.getElementById('last-update').innerHTML='Atualizado às '+new Date().toLocaleTimeString('pt-BR');
+  document.getElementById('app').innerHTML = html;
+  document.getElementById('last-update').innerHTML = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
 }
-function load(){
-  fetch(API+'?t='+Date.now())
-    .then(function(r){return r.json();})
+
+function load() {
+  fetch(API + '?t=' + Date.now())
+    .then(function(r){ return r.json(); })
     .then(function(d){
-      var games=(d.games||[]).filter(function(g){return ['r16','qf','sf','third','final'].indexOf(g.type)!==-1;});
+      var games = (d.games || []).filter(function(g){
+        return ['r16','qf','sf','third','final'].indexOf(g.type) !== -1;
+      });
       renderAll(games);
     })
     .catch(function(){
-      document.getElementById('app').innerHTML='<div style="text-align:center;padding:40px;color:#667">Erro ao carregar. Recarregue a página.</div>';
+      document.getElementById('app').innerHTML = '<div style="text-align:center;padding:40px;color:#667">Erro ao carregar. Recarregue a página.</div>';
     });
 }
+
 load();
-setInterval(load,30000);
+setInterval(load, 30000);
 </script>
 </body>
 </html>
