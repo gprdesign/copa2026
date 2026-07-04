@@ -26,19 +26,19 @@ header h1 span{color:#f5c842}
 .date-divider{font-size:0.65em;color:#667;text-align:center;padding:6px 0 4px;letter-spacing:1px;text-transform:uppercase}
 
 /* ===== CARD ===== */
-.game-card{background:#131829;border:2px solid #1e2540;border-radius:12px;padding:12px 14px;position:relative;overflow:hidden;transition:border-color .3s}
-.game-card.live{border-color:#ff4444;animation:borderPulse 1.5s ease-in-out infinite}
-.game-card.finished{border-color:#22aa55}
+.game-card{background:#131829;border:2px solid #f5c842;border-radius:12px;padding:12px 14px;position:relative;overflow:hidden;transition:border-color .3s}
+.game-card.live{border-color:#22bb55;animation:borderPulse 1.5s ease-in-out infinite}
+.game-card.finished{border-color:#dd2222}
 @keyframes borderPulse{
-  0%{box-shadow:0 0 0 0 rgba(255,68,68,0.15);border-color:rgba(255,68,68,0.15)}
-  50%{box-shadow:0 0 10px 2px rgba(255,68,68,0.5);border-color:rgba(255,68,68,1)}
-  100%{box-shadow:0 0 0 0 rgba(255,68,68,0.15);border-color:rgba(255,68,68,0.15)}
+  0%{box-shadow:0 0 0 0 rgba(34,187,85,0.15);border-color:rgba(34,187,85,0.15)}
+  50%{box-shadow:0 0 10px 2px rgba(34,187,85,0.5);border-color:rgba(34,187,85,1)}
+  100%{box-shadow:0 0 0 0 rgba(34,187,85,0.15);border-color:rgba(34,187,85,0.15)}
 }
 .game-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .game-date{font-size:0.7em;color:#667}
 .game-status{font-size:0.68em;padding:2px 8px;border-radius:20px;font-weight:700}
-.status-live{background:#ff4444;color:#fff;animation:pulseFade 1.5s infinite}
-.status-finished{background:#1a3a28;color:#44cc77}
+.status-live{background:#22bb55;color:#fff;animation:pulseFade 1.5s infinite}
+.status-finished{background:#2a1a1a;color:#ff6666}
 .status-notstarted{background:#1a2235;color:#667aaa}
 @keyframes pulseFade{0%,100%{opacity:1}50%{opacity:0.6}}
 .teams-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
@@ -49,7 +49,7 @@ header h1 span{color:#f5c842}
 .score-box{display:flex;align-items:center;gap:5px;flex-shrink:0}
 .score{font-size:1.9em;font-weight:800;min-width:28px;text-align:center;color:#fff}
 .score-sep{font-size:1.3em;color:#445;font-weight:300}
-.live-bar{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#ff4444,#ff8844,#ff4444);background-size:200%;animation:shimmer 2s linear infinite}
+.live-bar{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#22bb55,#88ff99,#22bb55);background-size:200%;animation:shimmer 2s linear infinite}
 @keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
 .scorers{margin-top:8px;padding-top:7px;border-top:1px solid #1e2540;display:flex;justify-content:space-between;gap:8px}
 .scorer-side{flex:1;font-size:0.65em;color:#8892b0;line-height:1.5}
@@ -66,9 +66,9 @@ header h1 span{color:#f5c842}
 .bracket-col{display:flex;flex-direction:column;align-items:center;gap:0;padding:0 6px}
 .bracket-col-title{font-size:0.65em;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#f5c842;text-align:center;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #2a3050;width:100%}
 .bracket-spacer{flex:1}
-.b-slot{background:#131829;border:1px solid #1e2540;border-radius:8px;padding:8px 10px;width:100%;margin:4px 0;transition:border-color .2s}
-.b-slot.live{border-color:#ff4444}
-.b-slot.finished{border-color:#22aa55}
+.b-slot{background:#131829;border:1px solid #f5c84266;border-radius:8px;padding:8px 10px;width:100%;margin:4px 0;transition:border-color .2s}
+.b-slot.live{border-color:#22bb55}
+.b-slot.finished{border-color:#dd2222}
 .b-team{display:flex;align-items:center;gap:6px;padding:3px 0}
 .b-team-flag{font-size:1.1em}
 .b-team-name{font-size:0.7em;color:#ccd;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -78,7 +78,7 @@ header h1 span{color:#f5c842}
 .b-date{font-size:0.58em;color:#556;text-align:center;margin-top:4px}
 
 #last-update{text-align:center;font-size:0.7em;color:#445;padding-bottom:20px}
-.live-badge{display:inline-block;width:6px;height:6px;background:#ff4444;border-radius:50%;margin-right:5px;animation:pulseFade 1s infinite;vertical-align:middle}
+.live-badge{display:inline-block;width:6px;height:6px;background:#22bb55;border-radius:50%;margin-right:5px;animation:pulseFade 1s infinite;vertical-align:middle}
 
 /* ===== LANDSCAPE MEDIA ===== */
 @media (orientation:landscape) and (min-width:600px){
