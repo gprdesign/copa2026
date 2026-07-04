@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copa do Mundo 2026 🏆</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e1a; color: #fff; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+  header {
+    background: linear-gradient(135deg, #1a1f35 0%, #0d1221 100%);
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #2a3050;
+  }
+  header h1 { font-size: 1.6em; font-weight: 700; letter-spacing: 1px; }
+  header h1 span { color: #f5c842; }
+  .subtitle { color: #8892b0; font-size: 0.85em; margin-top: 4px; }
+  .phase-title {
+    text-align: center;
+    padding: 14px 0 6px;
+    font-size: 0.75em;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #f5c842;
+  }
+  .games-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 14px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .game-card {
+    background: #131829;
+    border: 1px solid #1e2540;
+    border-radius: 12px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .game-card.live { border-color: #ff4444; box-shadow: 0 0 12px rgba(255,68,68,0.2); }
+  .game-card.finished { opacity: 0.75; }
+  .game-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .game-date { font-size: 0.72em; color: #667; }
+  .game-status { font-size: 0.7em; padding: 2px 8px; border-radius: 20px; font-weight: 700; letter-spacing: 0.5px; }
+  .status-live { background: #ff4444; color: #fff; animation: pulse 1.5s infinite; }
+  .status-finished { background: #2a3050; color: #8892b0; }
+  .status-notstarted { background: #1a2235; color: #667aaa; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  .teams-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .team { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .team-flag { font-size: 2em; line-height: 1; }
+  .team-name { font-size: 0.78em; font-weight: 600; text-align: center; color: #ccd; letter-spacing: 0.3px; }
+  .score-box { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .score { font-size: 2em; font-weight: 800; min-width: 32px; text-align: center; color: #fff; }
+  .score-sep { font-size: 1.4em; color: #445; font-weight: 300; }
+  .live-indicator {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #ff4444, #ff8844, #ff4444);
+    background-size: 200%;
+    animation: shimmer 2s linear infinite;
+  }
+  @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+  #last-update { text-align: center; font-size: 0.7em; color: #445; padding-bottom: 20px; }
+  .live-badge {
+    display: inline-block; width: 6px; height: 6px; background: #ff4444;
+    border-radius: 50%; margin-right: 5px; animation: pulse 1s infinite; vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏆 Copa do Mundo <span>2026</span></h1>
+  <div class="subtitle">Placares em tempo real · Atualiza a cada 30s</div>
+</header>
+<div id="app"></div>
+<div id="last-update"></div>
+<script>
+var API = 'https://worldcup26.ir/get/games';
+var FLAGS = {
+  'Mexico':'🇲🇽','South Africa':'🇿🇦','Brazil':'🇧🇷','Germany':'🇩🇪','Argentina':'🇦🇷',
+  'France':'🇫🇷','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Spain':'🇪🇸','Portugal':'🇵🇹','United States':'🇺🇸',
+  'Japan':'🇯🇵','Morocco':'🇲🇦','Netherlands':'🇳🇱','Belgium':'🇧🇪','Uruguay':'🇺🇾',
+  'Colombia':'🇨🇴','Switzerland':'🇨🇭','Canada':'🇨🇦','Norway':'🇳🇴','Egypt':'🇪🇬',
+  'Paraguay':'🇵🇾','Saudi Arabia':'🇸🇦','Australia':'🇦🇺','Croatia':'🇭🇷',
+  'Senegal':'🇸🇳','Ecuador':'🇪🇨','Chile':'🇨🇱','Korea Republic':'🇰🇷',
+  'Iran':'🇮🇷','Poland':'🇵🇱','Denmark':'🇩🇰','Serbia':'🇷🇸','Ukraine':'🇺🇦',
+  'Turkey':'🇹🇷','Peru':'🇵🇪','Venezuela':'🇻🇪','Panama':'🇵🇦','Honduras':'🇭🇳',
+  'Costa Rica':'🇨🇷','Jamaica':'🇯🇲','Bolivia':'🇧🇴','New Zealand':'🇳🇿','Indonesia':'🇮🇩'
+};
+var PHASES = { 'r16':'⚔️ Oitavas de Final','qf':'🎯 Quartas de Final','sf':'🔥 Semifinais','third':'🥉 Disputa de 3º Lugar','final':'🏆 Final' };
+function flag(n){ return FLAGS[n]||'🏳️'; }
+function parseDate(s){
+  if(!s) return null;
+  var m=s.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
+  if(!m) return null;
+  return new Date(m[3]+'-'+m[2]+'-'+m[1]+'T'+m[4]+':'+m[5]+':00');
+}
+function statusLabel(g){
+  if(g.time_elapsed==='live') return '<span class="game-status status-live"><span class="live-badge"></span>AO VIVO</span>';
+  if(g.finished==='TRUE'||g.time_elapsed==='finished') return '<span class="game-status status-finished">Encerrado</span>';
+  var d=parseDate(g.local_date);
+  if(d) return '<span class="game-status status-notstarted">'+d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</span>';
+  return '<span class="game-status status-notstarted">Em breve</span>';
+}
+function renderGame(g){
+  var isLive=g.time_elapsed==='live';
+  var isDone=g.finished==='TRUE'||g.time_elapsed==='finished';
+  var cls=isLive?'live':isDone?'finished':'';
+  var home=g.home_team_name_en||g.home_team_label||'?';
+  var away=g.away_team_name_en||g.away_team_label||'?';
+  var hf=g.home_team_name_en?flag(home):'🏳️';
+  var af=g.away_team_name_en?flag(away):'🏳️';
+  var hs=(isDone||isLive)?g.home_score:'-';
+  var as=(isDone||isLive)?g.away_score:'-';
+  return '<div class="game-card '+cls+'">'+(isLive?'<div class="live-indicator"></div>':'')+
+    '<div class="game-meta"><span class="game-date">'+g.group+'</span>'+statusLabel(g)+'</div>'+
+    '<div class="teams-row">'+
+      '<div class="team"><div class="team-flag">'+hf+'</div><div class="team-name">'+home+'</div></div>'+
+      '<div class="score-box"><div class="score">'+hs+'</div><div class="score-sep">:</div><div class="score">'+as+'</div></div>'+
+      '<div class="team"><div class="team-flag">'+af+'</div><div class="team-name">'+away+'</div></div>'+
+    '</div></div>';
+}
+function renderAll(games){
+  var order=['r16','qf','sf','third','final'];
+  var html='';
+  for(var i=0;i<order.length;i++){
+    var ph=order[i];
+    var pg=games.filter(function(g){return g.type===ph;});
+    if(!pg.length) continue;
+    html+='<div class="phase-title">'+PHASES[ph]+'</div><div class="games-grid">';
+    for(var j=0;j<pg.length;j++) html+=renderGame(pg[j]);
+    html+='</div>';
+  }
+  document.getElementById('app').innerHTML=html;
+  document.getElementById('last-update').innerHTML='Atualizado às '+new Date().toLocaleTimeString('pt-BR');
+}
+function load(){
+  fetch(API+'?t='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var games=(d.games||[]).filter(function(g){return ['r16','qf','sf','third','final'].indexOf(g.type)!==-1;});
+      renderAll(games);
+    })
+    .catch(function(){
+      document.getElementById('app').innerHTML='<div style="text-align:center;padding:40px;color:#667">Erro ao carregar. Recarregue a página.</div>';
+    });
+}
+load();
+setInterval(load,30000);
+</script>
+</body>
+</html>
