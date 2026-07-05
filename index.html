@@ -397,6 +397,12 @@ function renderPortrait(games,gameMap){
     var ph=order[i];
     var pg=games.filter(function(g){return g.type===ph;});
     if(!pg.length)continue;
+    // Ordenar por data crescente (mais antigo primeiro)
+    pg.sort(function(a,b){
+      var da=parseDate(a.local_date), db=parseDate(b.local_date);
+      if(!da)return 1; if(!db)return -1;
+      return da-db;
+    });
     html+='<div class="phase-title">'+PHASES[ph]+'</div>';
     var lastDay='';
     html+='<div class="games-grid">';
