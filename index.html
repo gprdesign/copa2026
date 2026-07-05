@@ -11,9 +11,7 @@ header{background:linear-gradient(135deg,#1a1f35,#0d1221);padding:16px 20px;text
 header h1{font-size:1.4em;font-weight:700;letter-spacing:1px}
 header h1 span{color:#f5c842}
 .subtitle{color:#8892b0;font-size:0.8em;margin-top:3px}
-.toolbar{display:flex;justify-content:center;gap:10px;margin-top:10px;flex-wrap:wrap}
-.switch-btn{background:#1a2235;border:1px solid #2a3050;color:#8892b0;padding:5px 14px;border-radius:20px;font-size:0.75em;cursor:pointer;transition:all .2s}
-.switch-btn.active{background:#f5c842;color:#0a0e1a;border-color:#f5c842;font-weight:700}
+.toolbar{display:none}
 
 /* ===== PORTRAIT (default) ===== */
 .phase-title{text-align:center;padding:14px 0 6px;font-size:0.75em;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#f5c842}
@@ -106,16 +104,69 @@ header h1 span{color:#f5c842}
   #portrait-view{display:none}
   .landscape-layout{display:flex;gap:12px;padding:10px 12px 20px;max-width:1100px;margin:0 auto}
 }
+
+/* ===== BOTTOM NAV (glassmorphism) ===== */
+body{padding-bottom:80px}
+.bottom-nav{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:4px;
+  background:rgba(15,20,40,0.55);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:28px;
+  padding:8px 12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05) inset;
+  z-index:200;
+  min-width:240px;
+  justify-content:center;
+}
+.nav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:transparent;border:none;color:rgba(255,255,255,0.5);
+  padding:6px 18px;border-radius:20px;cursor:pointer;
+  transition:all .25s;font-family:inherit;
+}
+.nav-btn:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.85)}
+.nav-btn.active{background:rgba(245,200,66,0.15);color:#f5c842}
+.nav-icon{font-size:1.3em;line-height:1}
+.nav-label{font-size:0.6em;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+
+/* ===== LIGHT THEME ===== */
+body.light{background:#f0f2f8;color:#1a1f35}
+body.light header{background:linear-gradient(135deg,#e8eaf6,#dde1f5);border-bottom-color:#c5cadf}
+body.light header h1{color:#1a1f35}
+body.light .subtitle{color:#5c6380}
+body.light .phase-title{color:#e6a800}
+body.light .game-card{background:#fff;border-color:#d0d4e8}
+body.light .game-card.finished{border-color:#cc2222}
+body.light .game-card.live{border-color:#229944}
+body.light .team-name{color:#2a3050}
+body.light .game-date{color:#888}
+body.light .score{color:#1a1f35}
+body.light .score-sep{color:#bbb}
+body.light .scorer-side{color:#5c6380}
+body.light .day-divider span{color:#5c6380}
+body.light .day-divider::before{background:linear-gradient(to right,transparent,#c5cadf)}
+body.light .day-divider::after{background:linear-gradient(to left,transparent,#c5cadf)}
+body.light .status-finished{background:#ffe5e5;color:#cc2222}
+body.light .status-notstarted{background:#e8eaf6;color:#5c6380}
+body.light .status-live{background:#229944;color:#fff}
+body.light .bottom-nav{background:rgba(255,255,255,0.65);border-color:rgba(0,0,0,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.12)}
+body.light .nav-btn{color:rgba(30,40,80,0.5)}
+body.light .nav-btn:hover{background:rgba(0,0,0,0.06);color:rgba(30,40,80,0.9)}
+body.light .nav-btn.active{background:rgba(230,168,0,0.15);color:#b8860b}
+body.light #last-update{color:#aaa}
+body.light .b-slot{background:#fff;border-color:#d0d4e8}
+body.light .b-team-name{color:#2a3050}
+body.light .b-date{color:#888}
+body.light .bracket-col-title{color:#e6a800}
 </style>
 </head>
 <body>
 <header>
   <h1>🏆 Copa do Mundo <span>2026</span></h1>
   <div class="subtitle">Placares em tempo real · Atualiza a cada 30s</div>
-  <div class="toolbar">
-    <button class="switch-btn active" id="btn-list" onclick="setView('list')">📋 Lista</button>
-    <button class="switch-btn" id="btn-bracket" onclick="setView('bracket')">🌳 Chaveamento</button>
-  </div>
+
 </header>
 
 <div id="portrait-view">
@@ -470,8 +521,39 @@ function load(){
     });
 }
 
+// Tema
+function toggleTheme(){
+  var isLight=document.body.classList.toggle('light');
+  document.getElementById('theme-icon').textContent=isLight?'🌙':'☀️';
+  document.getElementById('theme-label').textContent=isLight?'Escuro':'Claro';
+  localStorage.setItem('copa2026-theme',isLight?'light':'dark');
+}
+// Restaurar tema salvo
+(function(){
+  if(localStorage.getItem('copa2026-theme')==='light'){
+    document.body.classList.add('light');
+    document.getElementById('theme-icon').textContent='🌙';
+    document.getElementById('theme-label').textContent='Escuro';
+  }
+})();
+
 load();
 setInterval(load,30000);
 </script>
+<!-- Bottom Nav Bar -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="nav-btn active" id="btn-list" onclick="setView('list')" title="Lista">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Lista</span>
+  </button>
+  <button class="nav-btn" id="btn-bracket" onclick="setView('bracket')" title="Chaveamento">
+    <span class="nav-icon">🌳</span>
+    <span class="nav-label">Chave</span>
+  </button>
+  <button class="nav-btn" id="btn-theme" onclick="toggleTheme()" title="Tema">
+    <span class="nav-icon" id="theme-icon">☀️</span>
+    <span class="nav-label" id="theme-label">Claro</span>
+  </button>
+</nav>
 </body>
 </html>
