@@ -514,8 +514,10 @@ function setView(v){
   var lv=document.getElementById('landscape-view');
   var bv=document.getElementById('bracket-view');
   if(pv)pv.style.display=v==='bracket'?'none':'';
-  if(lv)lv.style.display='';
-  if(bv)bv.style.display=v==='bracket'?'block':'none';
+  // landscape: só visível via CSS media query quando view=list
+  if(lv)lv.style.display=v==='list'?'':'none';
+  // bracket: forçar display:block sobrepondo CSS
+  if(bv){bv.style.cssText=v==='bracket'?'display:block !important':'display:none';}
   // Re-renderizar com dados em cache ao trocar de view
   if(cachedGames&&cachedGames.length){
     var gameMap=buildGameMap(cachedGames);
@@ -526,6 +528,16 @@ function setView(v){
       renderPortrait(knockout,gameMap);
       renderLandscape(knockout,gameMap);
     }
+  } else if(v==='bracket'){
+    // dados ainda não carregaram — aguardar
+    var waitBracket=setInterval(function(){
+      if(cachedGames&&cachedGames.length){
+        clearInterval(waitBracket);
+        var gm=buildGameMap(cachedGames);
+        var ko=cachedGames.filter(function(g){return['r16','qf','sf','third','final'].indexOf(g.type)!==-1;});
+        renderBracket(ko,gm);
+      }
+    },200);
   }
 }
 
