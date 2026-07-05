@@ -143,6 +143,11 @@ header h1 span{color:#f5c842}
 <script>
 var API='https://worldcup26.ir/get/games';
 var currentView='list';
+// Scorers que a API não fornece — fallback manual
+var SCORERS_OVERRIDE={
+  '89': {home_scorers:'null', away_scorers:'"Kylian Mbappé 70'(pen)"'}
+};
+
 var FLAGS={
   'Mexico':'🇲🇽','South Africa':'🇿🇦','Brazil':'🇧🇷','Germany':'🇩🇪','Argentina':'🇦🇷',
   'France':'🇫🇷','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Spain':'🇪🇸','Portugal':'🇵🇹','United States':'🇺🇸',
@@ -278,6 +283,12 @@ function renderCard(g,gameMap,compact){
   var hs=(isDone||isLive)?g.home_score:'-';
   var as_=(isDone||isLive)?g.away_score:'-';
   var scorersHtml=(isDone||isLive)?renderScorers(g):'';
+  // Fallback: usar override se scorers vazios
+  if((isDone||isLive)&&!scorersHtml&&SCORERS_OVERRIDE[g.id]){
+    var ov=SCORERS_OVERRIDE[g.id];
+    var gOv={home_scorers:ov.home_scorers,away_scorers:ov.away_scorers};
+    scorersHtml=renderScorers(gOv);
+  }
   // Determinar vencedor para glow azul
   var homeWon=false,awayWon=false;
   if(isDone&&!homeIsTbd&&!awayIsTbd){
