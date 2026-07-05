@@ -505,14 +505,14 @@ function manualRefresh(){
 }
 function shareApp(){
   var url='https://gprdesign.github.io/copa2026/';
-  var txt='Acompanhe o mata-mata da copa aqui! '+url+' --- Se quiser ajudar um dev autonomo www.buymeacoffee.com/giorimoli';
+  var shareText='\uD83C\uDFC6 Acompanhe os resultados em tempo real do mata-mata da copa de gra\u00E7a aqui!\n\uD83C\uDF10 '+url+'\n\n\uD83D\uDE4F\uD83C\uDFFD Se gostou do meu trabalho, e quiser ajudar um dev aut\u00F4nomo \uD83D\uDC49\uD83C\uDFFD https://buymeacoffee.com/giorimoli';
   if(navigator.share){
-    navigator.share({title:'Copa 2026',text:'Acompanhe o mata-mata da copa aqui! --- Se quiser ajudar um dev autonomo www.buymeacoffee.com/giorimoli',url:url});
+    navigator.share({title:'Copa 2026',text:shareText,url:''});
   } else {
-    navigator.clipboard.writeText(txt).then(function(){
+    navigator.clipboard.writeText(shareText).then(function(){
       var btn=document.getElementById('btn-share');
       if(btn){var o=btn.innerHTML;btn.innerHTML='OK';setTimeout(function(){btn.innerHTML=o;},1500);}
-    }).catch(function(){window.prompt('Copie o link:',txt);});
+    }).catch(function(){window.prompt('Copie o link:',shareText);});
   }
 }
 
