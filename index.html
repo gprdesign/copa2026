@@ -545,8 +545,11 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 </script>
 <script>
+// Desregistrar qualquer service worker antigo para garantir versao mais recente
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(function(){});
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    for(var r of regs){ r.unregister(); }
+  });
 }
 </script>
 </body>
