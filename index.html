@@ -12,10 +12,15 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a0e1a;color:#fff;font-family:'Segoe UI',sans-serif;min-height:100vh}
-header{background:linear-gradient(135deg,#1a1f35,#0d1221);padding:16px 20px;text-align:center;border-bottom:2px solid #2a3050;position:sticky;top:0;z-index:100}
+header{background:linear-gradient(135deg,#1a1f35,#0d1221);padding:12px 16px;border-bottom:1px solid #2a3050;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:10px}
 header h1{font-size:1.4em;font-weight:700;letter-spacing:1px}
 header h1 span{color:#f5c842}
-.subtitle{color:#8892b0;font-size:0.8em;margin-top:3px}
+.subtitle{color:#8892b0;font-size:0.75em;margin-top:2px}
+.header-left{display:flex;flex-direction:column}
+.header-actions{display:flex;gap:6px;flex-shrink:0}
+.hdr-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#ccd;border-radius:20px;padding:6px 12px;font-size:0.78em;cursor:pointer;display:flex;align-items:center;gap:3px;transition:background .2s;font-family:inherit;white-space:nowrap}
+.hdr-btn:hover{background:rgba(255,255,255,0.14)}
+#countdown{font-weight:700;color:#f5c842;min-width:18px;display:inline-block;text-align:center}
 .toolbar{display:none}
 
 /* ===== PORTRAIT (default) ===== */
@@ -123,6 +128,8 @@ body{padding-bottom:80px}
 /* ===== LIGHT THEME ===== */
 body.light{background:#f0f2f8;color:#1a1f35}
 body.light header{background:linear-gradient(135deg,#e8eaf6,#dde1f5);border-bottom-color:#c5cadf}
+body.light .hdr-btn{background:rgba(0,0,0,0.06);border-color:rgba(0,0,0,0.12);color:#2a3050}
+body.light #countdown{color:#b8860b}
 body.light header h1{color:#1a1f35}
 body.light .subtitle{color:#5c6380}
 body.light .phase-title{color:#e6a800}
@@ -153,9 +160,14 @@ body.light .bracket-col-title{color:#e6a800}
 </head>
 <body>
 <header>
-  <h1>🏆 Copa do Mundo <span>2026</span></h1>
-  <div class="subtitle">Placares em tempo real · Atualiza a cada 30s</div>
-
+  <div class="header-left">
+    <h1>&#127942; Copa do Mundo <span>2026</span></h1>
+    <div class="subtitle">Placares em tempo real</div>
+  </div>
+  <div class="header-actions">
+    <button class="hdr-btn" id="btn-refresh" onclick="manualRefresh()">&#128260; <span id="countdown">30</span>s</button>
+    <button class="hdr-btn" id="btn-share" onclick="shareApp()">&#128228;</button>
+  </div>
 </header>
 
 <div id="portrait-view">
@@ -433,6 +445,7 @@ function renderAll(games){
   renderPortrait(knockout,gameMap);
   renderLandscape(knockout,gameMap);
   document.getElementById('last-update').innerHTML='Atualizado às '+new Date().toLocaleTimeString('pt-BR');
+  if(typeof startCountdown!=='undefined')startCountdown();
 }
 
 function load(){
@@ -451,8 +464,42 @@ function toggleTheme(){
   document.getElementById('theme-label').textContent=isLight?'Escuro':'Claro';
   localStorage.setItem('copa2026-theme',isLight?'light':'dark');
 }
+// Countdown
+var countdownVal=30;
+var countdownTimer=null;
+function startCountdown(){
+  clearInterval(countdownTimer);
+  countdownVal=30;
+  var el=document.getElementById('countdown');
+  if(el)el.textContent=countdownVal;
+  countdownTimer=setInterval(function(){
+    countdownVal--;
+    var el=document.getElementById('countdown');
+    if(el)el.textContent=countdownVal<1?0:countdownVal;
+    if(countdownVal<=0){clearInterval(countdownTimer);}
+  },1000);
+}
+function manualRefresh(){
+  clearInterval(countdownTimer);
+  load();
+  startCountdown();
+}
+function shareApp(){
+  var url='https://gprdesign.github.io/copa2026/';
+  var txt='Acompanhe o mata-mata da copa aqui! '+url+' --- Se quiser ajudar um dev autonomo www.buymeacoffee.com/giorimoli';
+  if(navigator.share){
+    navigator.share({title:'Copa 2026',text:'Acompanhe o mata-mata da copa aqui! --- Se quiser ajudar um dev autonomo www.buymeacoffee.com/giorimoli',url:url});
+  } else {
+    navigator.clipboard.writeText(txt).then(function(){
+      var btn=document.getElementById('btn-share');
+      if(btn){var o=btn.innerHTML;btn.innerHTML='OK';setTimeout(function(){btn.innerHTML=o;},1500);}
+    }).catch(function(){window.prompt('Copie o link:',txt);});
+  }
+}
+
 load();
-setInterval(load,30000);
+startCountdown();
+setInterval(function(){load();startCountdown();},30000);
 
 // Restaurar tema e estado inicial APÓS DOM completo
 document.addEventListener('DOMContentLoaded',function(){
