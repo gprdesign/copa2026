@@ -516,6 +516,17 @@ function setView(v){
   if(pv)pv.style.display=v==='bracket'?'none':'';
   if(lv)lv.style.display='';
   if(bv)bv.style.display=v==='bracket'?'block':'none';
+  // Re-renderizar com dados em cache ao trocar de view
+  if(cachedGames&&cachedGames.length){
+    var gameMap=buildGameMap(cachedGames);
+    var knockout=cachedGames.filter(function(g){return['r16','qf','sf','third','final'].indexOf(g.type)!==-1;});
+    if(v==='bracket'){
+      renderBracket(knockout,gameMap);
+    } else {
+      renderPortrait(knockout,gameMap);
+      renderLandscape(knockout,gameMap);
+    }
+  }
 }
 
 var cachedGames=null;
