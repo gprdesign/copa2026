@@ -237,7 +237,9 @@ function parseDate(s){
   if(!s)return null;
   var m=s.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
   if(!m)return null;
-  return new Date(m[3]+'-'+m[1]+'-'+m[2]+'T'+m[4]+':'+m[5]+':00');
+  // API retorna horário local do estádio (EDT = UTC-4 no verão)
+  // Construir com offset -04:00 para o browser converter corretamente pro fuso local
+  return new Date(m[3]+'-'+m[1]+'-'+m[2]+'T'+m[4]+':'+m[5]+':00-04:00');
 }
 
 function fmtDate(s){
