@@ -58,6 +58,23 @@ header h1 span{color:#f5c842}
 .scorer-item{display:flex;align-items:center;gap:3px}
 .scorer-side.left .scorer-item{justify-content:flex-start}
 .scorer-side.right .scorer-item{justify-content:flex-end}
+.team.winner{position:relative;border-radius:10px;overflow:visible}
+.team.winner::before{
+  content:'';
+  position:absolute;
+  inset:-6px;
+  border-radius:14px;
+  background:radial-gradient(ellipse at center,rgba(30,120,255,0.45) 0%,rgba(30,120,255,0.08) 60%,transparent 100%);
+  filter:blur(8px);
+  animation:winnerGlow 2s ease-in-out infinite;
+  z-index:0;
+  pointer-events:none;
+}
+.team.winner>*{position:relative;z-index:1}
+@keyframes winnerGlow{
+  0%,100%{opacity:0.15;transform:scale(0.95)}
+  50%{opacity:1;transform:scale(1.05)}
+}
 
 /* ===== BRACKET ===== */
 #bracket-view{display:none;padding:16px 10px 30px;max-width:900px;margin:0 auto}
@@ -261,12 +278,21 @@ function renderCard(g,gameMap,compact){
   var hs=(isDone||isLive)?g.home_score:'-';
   var as_=(isDone||isLive)?g.away_score:'-';
   var scorersHtml=(isDone||isLive)?renderScorers(g):'';
+  // Determinar vencedor para glow azul
+  var homeWon=false,awayWon=false;
+  if(isDone&&!homeIsTbd&&!awayIsTbd){
+    var hsc=parseInt(g.home_score)||0, asc=parseInt(g.away_score)||0;
+    var hps=g.home_penalty_score&&g.home_penalty_score!=='null'?parseInt(g.home_penalty_score):null;
+    var aps=g.away_penalty_score&&g.away_penalty_score!=='null'?parseInt(g.away_penalty_score):null;
+    if(hps!==null&&aps!==null){homeWon=hps>aps;awayWon=aps>hps;}
+    else{homeWon=hsc>asc;awayWon=asc>hsc;}
+  }
   return'<div class="game-card '+cls+'">'+(isLive?'<div class="live-bar"></div>':'')+
     '<div class="game-meta"><span class="game-date">'+g.group+'</span>'+statusLabel(g)+'</div>'+
     '<div class="teams-row">'+
-      '<div class="team"><div class="team-flag">'+hf+'</div><div class="team-name'+(homeIsTbd?' tbd':'')+'">'+homeName+'</div></div>'+
+      '<div class="team'+(homeWon?' winner':'')+'"><div class="team-flag">'+hf+'</div><div class="team-name'+(homeIsTbd?' tbd':'')+'">'+homeName+'</div></div>'+
       '<div class="score-box"><div class="score">'+hs+'</div><div class="score-sep">:</div><div class="score">'+as_+'</div></div>'+
-      '<div class="team"><div class="team-flag">'+af+'</div><div class="team-name'+(awayIsTbd?' tbd':'')+'">'+awayName+'</div></div>'+
+      '<div class="team'+(awayWon?' winner':'')+'"><div class="team-flag">'+af+'</div><div class="team-name'+(awayIsTbd?' tbd':'')+'">'+awayName+'</div></div>'+
     '</div>'+scorersHtml+
   '</div>';
 }
