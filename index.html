@@ -422,12 +422,18 @@ function renderPortrait(games,gameMap){
   document.getElementById('app').innerHTML=html;
 }
 
-function renderLandscape(games,gameMap){
-  var liveGames=games.filter(function(g){return g.time_elapsed==='live';});
-  var doneToday=games.filter(function(g){return(g.finished==='TRUE'||g.time_elapsed==='finished')&&isToday(g.local_date);});
-  var upcoming=games.filter(function(g){
-    return g.time_elapsed!=='live'&&g.finished!=='TRUE'&&g.time_elapsed!=='finished'&&(isToday(g.local_date)||isTomorrow(g.local_date));
+function sortByDate(arr){
+  return arr.slice().sort(function(a,b){
+    var da=parseDate(a.local_date),db=parseDate(b.local_date);
+    if(!da)return 1;if(!db)return -1;return da-db;
   });
+}
+function renderLandscape(games,gameMap){
+  var liveGames=sortByDate(games.filter(function(g){return g.time_elapsed==='live';}));
+  var doneToday=sortByDate(games.filter(function(g){return(g.finished==='TRUE'||g.time_elapsed==='finished')&&isToday(g.local_date);}));
+  var upcoming=sortByDate(games.filter(function(g){
+    return g.time_elapsed!=='live'&&g.finished!=='TRUE'&&g.time_elapsed!=='finished'&&(isToday(g.local_date)||isTomorrow(g.local_date));
+  }));
 
   // Live col
   var liveHtml='';
@@ -435,7 +441,7 @@ function renderLandscape(games,gameMap){
   for(var i=0;i<liveGames.length;i++)liveHtml+=renderCard(liveGames[i],gameMap,true);
   document.getElementById('col-live-games').innerHTML=liveHtml;
 
-  // Next col — separar hoje e amanhã
+  // Next col — separar hoje e amanhã (já ordenados por data)
   var nextHtml='';
   var todayGames=upcoming.filter(function(g){return isToday(g.local_date);});
   var tomorrowGames=upcoming.filter(function(g){return isTomorrow(g.local_date);});
@@ -444,7 +450,7 @@ function renderLandscape(games,gameMap){
   if(tomorrowGames.length){nextHtml+='<div class="date-divider">Amanhã</div>';for(var i=0;i<tomorrowGames.length;i++)nextHtml+=renderCard(tomorrowGames[i],gameMap,true);}
   document.getElementById('col-next-games').innerHTML=nextHtml;
 
-  // Done col
+  // Done col — ordenados por data
   var doneHtml='';
   if(!doneToday.length)doneHtml='<div style="text-align:center;padding:20px;color:#445;font-size:0.8em">Nenhum jogo finalizado hoje</div>';
   for(var i=0;i<doneToday.length;i++)doneHtml+=renderCard(doneToday[i],gameMap,true);
