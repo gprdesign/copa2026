@@ -24,6 +24,10 @@ header h1 span{color:#f5c842}
 .landscape-col{flex:1;min-width:0}
 .col-title{text-align:center;padding:12px 0 8px;font-size:0.7em;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#f5c842;border-bottom:1px solid #1e2540;margin-bottom:8px}
 .date-divider{font-size:0.65em;color:#667;text-align:center;padding:6px 0 4px;letter-spacing:1px;text-transform:uppercase}
+.day-divider{display:flex;align-items:center;gap:0;padding:14px 14px 4px;max-width:600px;margin:0 auto}
+.day-divider::before,.day-divider::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,#2a3050)}
+.day-divider::after{background:linear-gradient(to left,transparent,#2a3050)}
+.day-divider span{padding:0 12px;font-size:0.7em;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8892b0;white-space:nowrap}
 
 /* ===== CARD ===== */
 .game-card{background:#131829;border:2px solid #f5c842;border-radius:12px;padding:12px 14px;position:relative;overflow:hidden;transition:border-color .3s}
@@ -308,6 +312,17 @@ function renderCard(g,gameMap,compact){
   '</div>';
 }
 
+function getDayKey(s){
+  var d=parseDate(s);
+  if(!d)return'';
+  return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
+}
+function getDayLabel(s){
+  var d=parseDate(s);
+  if(!d)return'';
+  var dias=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  return dias[d.getDay()];
+}
 function renderPortrait(games,gameMap){
   var order=['r16','qf','sf','third','final'];
   var html='';
@@ -315,8 +330,20 @@ function renderPortrait(games,gameMap){
     var ph=order[i];
     var pg=games.filter(function(g){return g.type===ph;});
     if(!pg.length)continue;
-    html+='<div class="phase-title">'+PHASES[ph]+'</div><div class="games-grid">';
-    for(var j=0;j<pg.length;j++)html+=renderCard(pg[j],gameMap,false);
+    html+='<div class="phase-title">'+PHASES[ph]+'</div>';
+    var lastDay='';
+    html+='<div class="games-grid">';
+    for(var j=0;j<pg.length;j++){
+      var g=pg[j];
+      var dayKey=getDayKey(g.local_date);
+      if(dayKey&&dayKey!==lastDay){
+        if(lastDay!==''){
+          html+='</div><div class="day-divider"><span>'+getDayLabel(g.local_date)+'</span></div><div class="games-grid">';
+        }
+        lastDay=dayKey;
+      }
+      html+=renderCard(g,gameMap,false);
+    }
     html+='</div>';
   }
   document.getElementById('app').innerHTML=html;
