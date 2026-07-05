@@ -1,4 +1,4 @@
-const CACHE = 'copa2026-v1';
+const CACHE = 'copa2026-v2';
 const OFFLINE = ['/copa2026/', '/copa2026/index.html'];
 
 self.addEventListener('install', function(e) {
